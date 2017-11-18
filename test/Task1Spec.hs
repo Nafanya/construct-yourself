@@ -9,8 +9,10 @@ import qualified Text.Parsec      as TP (parse)
 import           Text.Parsec.Text
 
 main :: IO ()
-main = hspec $
+main = hspec $ do
     describe "Task 1 test" parserTest
+    describe "Task 1 - extended with or and sub test suite" extendedTest
+    describe "Task 1 - my special testsuite" myTest
 
 parserTest :: SpecWith ()
 parserTest = do
@@ -36,8 +38,26 @@ parserTest = do
   it "#19" $ checkWithEval parse "3 + 42 < 43" $ BLit False
   it "#20" $ checkWithEval parse "42 + 2 < 49 && T" $ BLit True
 
-  it "#21" $ check parse "T || F" $ b True `Or` b False
-  it "#22" $ checkWithEval parse "T || F" $ BLit True
+extendedTest = do
+  it "#1" $ check parse "42 - 41" $ i 42 `Sub` i 41
+  it "#2" $ check parse "(42 - 41)" $ i 42 `Sub` i 41
+  it "#3" $ check parse "T || T" $ b True `Or` b True
+  it "#4" $ check parse "T || F" $ b True `Or` b False
+
+  it "#5" $ checkWithEval parse "T || F" $ BLit True
+  it "#6" $ checkWithEval parse "T || (100 < 42)" $ BLit True
+  it "#7" $ checkWithEval parse "F || F" $ BLit False
+  it "#8" $ checkWithEval parse "43 - 42" $ ILit 1
+  it "#9" $ checkWithEval parse "3 + 2 - 1" $ ILit 4
+  it "#10" $ checkWithEval parse "(3 - 2) + 1" $ ILit 2
+  it "#11" $ checkWithEval parse "45 - 1 < 43" $ BLit False
+  it "#12" $ checkWithEval parse "42 + 2 < 49 || F" $ BLit True
+
+myTest :: SpecWith ()
+myTest = do
+  it "#1" $ checkWithEval parse "((1 + 2) + (1 + 2 + (2))) < 49 && F" $ BLit False
+  it "#2" $ checkWithEval parse "1 < 49 && F" $ BLit False
+  it "#3" $ check parse "1<49&&F" $ (i 1 `Leq` i 49) `And` b False
 
 check :: (Eq a, Show a) => Parser a -> Text -> a -> Expectation
 check parser inputStr result =
