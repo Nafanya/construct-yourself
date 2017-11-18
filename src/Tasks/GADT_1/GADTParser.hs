@@ -5,16 +5,14 @@
 
 module Tasks.GADT_1.GADTParser where
 
-import           Data.Text              (pack, unpack)
-import           Tasks.GADT_1.GADTExpr
-import           Text.Parsec.Char       (char, digit, oneOf, satisfy, space,
-                                         string)
-import           Text.Parsec.Combinator (between, many1)
-import           Text.Parsec.Language   (haskellDef)
-import           Text.Parsec.Prim       (ParsecT, Stream, many, parseTest, try,
-                                         (<|>))
-import           Text.Parsec.Text       (Parser)
-import           Text.Parsec.Token
+import Data.Text (pack, unpack)
+import Tasks.GADT_1.GADTExpr
+import Text.Parsec.Char (char, digit, oneOf, satisfy, space, string)
+import Text.Parsec.Combinator (between, many1)
+import Text.Parsec.Language (haskellDef)
+import Text.Parsec.Prim (ParsecT, Stream, many, parseTest, try, (<|>))
+import Text.Parsec.Text (Parser)
+import Text.Parsec.Token
 
 -- `*>`  discards fst
 -- `<*`  discards snd
@@ -68,8 +66,8 @@ instance MyParse Bool where
 
 class MyParse a where
   variants :: [Parser (Expr a)]
-  parse :: Parser (Expr a)
-  tryThem :: [Parser (Expr a)] -> Parser (Expr a)
+  parse    :: Parser (Expr a)
+  tryThem  :: [Parser (Expr a)] -> Parser (Expr a)
 
   parse = tryThem variants
 
