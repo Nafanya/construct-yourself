@@ -15,6 +15,7 @@ deriving instance Ord (Lit a)
 data Expr :: * -> * where
   Lit :: Lit a -> Expr a
   Add :: Expr Int  -> Expr Int  -> Expr Int
+  Sub :: Expr Int  -> Expr Int  -> Expr Int
   Leq :: Expr Int  -> Expr Int  -> Expr Bool
   And :: Expr Bool -> Expr Bool -> Expr Bool
   Or  :: Expr Bool -> Expr Bool -> Expr Bool
@@ -28,6 +29,9 @@ expr (Lit x)   = x
 expr (Add x y) = let ILit x' = expr x
                      ILit y' = expr y
                  in  ILit $ x' + y'
+expr (Sub x y) = let ILit x' = expr x
+                     ILit y' = expr y
+                 in  ILit $ x' - y'
 expr (Leq x y) = let ILit x' = expr x
                      ILit y' = expr y
                  in  BLit $ x' <= y'

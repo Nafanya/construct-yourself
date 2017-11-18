@@ -8,10 +8,11 @@ module Tasks.GADT_1.GADTParser where
 import           Data.Text              (pack, unpack)
 import           Tasks.GADT_1.GADTExpr
 import           Text.Parsec.Char       (char, digit, oneOf, satisfy, space,
-                                         string, oneOf)
+                                         string)
 import           Text.Parsec.Combinator (between, many1)
 import           Text.Parsec.Language   (haskellDef)
-import           Text.Parsec.Prim       (many, parseTest, try, (<|>), Stream, ParsecT)
+import           Text.Parsec.Prim       (ParsecT, Stream, many, parseTest, try,
+                                         (<|>))
 import           Text.Parsec.Text       (Parser)
 import           Text.Parsec.Token
 
@@ -27,10 +28,10 @@ boolTokenP :: Parser Char --Stream s m Char => ParsecT s u m Char
 boolTokenP = oneOf "TF"
 
 spaceSkipP :: Parser a -> Parser a
-spaceSkipP = between (many space) (many space)
+spaceSkipP = try . (between (many space) (many space))
 
 braceSkipP :: Parser a -> Parser a
-braceSkipP = try . between (char '(') (char ')')
+braceSkipP = between (char '(') (char ')')
 
 iLitP :: Parser (Lit Int)
 iLitP = (ILit . read) <$> spaceSkipP intTokenP
@@ -45,32 +46,33 @@ bbLitP :: Parser (Expr Bool)
 bbLitP = Lit <$> bLitP
 
 addP :: Parser (Expr Int)
-addP = (Add <$> (spaceSkipP (braceSkipP parse) <* char '+') <*> spaceSkipP parse) <|>
-       (Add <$> (iiLitP <* char '+') <*> spaceSkipP parse)
+addP = Add <$> ((tryThem [iiLitP]) <* char '+') <*> parse
+
+subP :: Parser (Expr Int)
+subP = Sub <$> ((tryThem [iiLitP]) <* char '-') <*> parse
 
 leqP :: Parser (Expr Bool)
 leqP = Leq <$> (parse <* char '<') <*> parse
 
--- as addP
 andP :: Parser (Expr Bool)
-andP = (And <$> (spaceSkipP (braceSkipP parse) <* string "&&") <*> spaceSkipP parse) <|>
-       (And <$> (bbLitP <* string "&&") <*> spaceSkipP parse)
+andP = And <$> ((tryThem [bbLitP, leqP]) <* string "&&") <*> parse
 
 orP :: Parser (Expr Bool)
-orP = (Or <$> (spaceSkipP (braceSkipP parse) <* string "||") <*> spaceSkipP parse) <|>
-      (Or <$> (bbLitP <* string "||") <*> spaceSkipP parse)
-
-class MyParse a where
-  parse :: Parser (Expr a)
+orP = Or <$> ((tryThem [bbLitP, leqP]) <* string "||") <*> parse
 
 instance MyParse Int where
-  parse = try (spaceSkipP addP)
-          <|> braceSkipP parse
-          <|> iiLitP
-
+  variants = [addP, subP, iiLitP]
 instance MyParse Bool where
-  parse = try (spaceSkipP leqP)
-          <|> try (spaceSkipP andP)
-          <|> try (spaceSkipP orP)
-          <|> braceSkipP parse
-          <|> bbLitP
+  variants = [orP, andP, leqP, bbLitP]
+
+
+class MyParse a where
+  variants :: [Parser (Expr a)]
+  parse :: Parser (Expr a)
+  tryThem :: [Parser (Expr a)] -> Parser (Expr a)
+
+  parse = tryThem variants
+
+  tryThem pasrsers = matcher $ ([spaceSkipP] <*> pasrsers) ++ ([\p -> spaceSkipP $ braceSkipP $ spaceSkipP p] <*> variants) where
+    matcher [x]    = x
+    matcher (x:xs) = x <|> matcher xs
