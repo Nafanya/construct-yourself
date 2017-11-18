@@ -1,17 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
-    
+
+import           Data.Text
+import           Tasks
 import           Test.Hspec
-import qualified Text.Parsec as TP (parse)
-import Text.Parsec.Text
-import Data.Text 
-import Tasks
+import qualified Text.Parsec      as TP (parse)
+import           Text.Parsec.Text
 
 main :: IO ()
 main = hspec $
     describe "Task 1 test" parserTest
-    
+
 parserTest :: SpecWith ()
 parserTest = do
   it "#1" $ check parse "42" $ i 42
@@ -23,8 +23,8 @@ parserTest = do
   it "#7" $ check parse "42 < 41" $ i 42 `Leq` i 41
   it "#8" $ check parse "(42 < 41)" $ i 42 `Leq` i 41
   it "#9" $ check parse "T" $ b True
-  it "#10" $ check parse "F" $ b False 
-  it "#11" $ check parse "(F)" $ b False 
+  it "#10" $ check parse "F" $ b False
+  it "#11" $ check parse "(F)" $ b False
   it "#12" $ check parse "T && T" $ b True `And` b True
 
   it "#13" $ checkWithEval parse "T && (100 < 42)" $ BLit False
@@ -36,6 +36,8 @@ parserTest = do
   it "#19" $ checkWithEval parse "3 + 42 < 43" $ BLit False
   it "#20" $ checkWithEval parse "42 + 2 < 49 && T" $ BLit True
 
+  it "#21" $ check parse "T || F" $ b True `Or` b False
+  it "#22" $ checkWithEval parse "T || F" $ BLit True
 
 check :: (Eq a, Show a) => Parser a -> Text -> a -> Expectation
 check parser inputStr result =

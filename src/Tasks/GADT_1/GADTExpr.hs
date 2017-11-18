@@ -1,6 +1,6 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs              #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies       #-}
 
 module Tasks.GADT_1.GADTExpr where
 
@@ -17,6 +17,7 @@ data Expr :: * -> * where
   Add :: Expr Int  -> Expr Int  -> Expr Int
   Leq :: Expr Int  -> Expr Int  -> Expr Bool
   And :: Expr Bool -> Expr Bool -> Expr Bool
+  Or  :: Expr Bool -> Expr Bool -> Expr Bool
 
 deriving instance Show a => Show (Expr a)
 deriving instance Eq (Expr a)
@@ -33,12 +34,15 @@ expr (Leq x y) = let ILit x' = expr x
 expr (And x y) = let BLit x' = expr x
                      BLit y' = expr y
                  in  BLit $ x' && y'
+expr (Or x y) =  let BLit x' = expr x
+                     BLit y' = expr y
+                 in  BLit $ x' || y'
 
 i :: Int -> Expr Int
 i = Lit . ILit
 
 b :: Bool -> Expr Bool
-b = Lit . BLit 
+b = Lit . BLit
 
 example1 :: Expr Bool -- 42 + 2 < 49 && True
 example1 = ((i 42 `Add` i 2) `Leq` i 49) `And` b True

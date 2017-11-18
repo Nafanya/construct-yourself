@@ -27,7 +27,7 @@ boolTokenP :: Parser Char --Stream s m Char => ParsecT s u m Char
 boolTokenP = oneOf "TF"
 
 spaceSkipP :: Parser a -> Parser a
-spaceSkipP p = (many space *> p) <* many space
+spaceSkipP = between (many space) (many space)
 
 braceSkipP :: Parser a -> Parser a
 braceSkipP = try . between (char '(') (char ')')
@@ -51,15 +51,26 @@ addP = (Add <$> (spaceSkipP (braceSkipP parse) <* char '+') <*> spaceSkipP parse
 leqP :: Parser (Expr Bool)
 leqP = Leq <$> (parse <* char '<') <*> parse
 
+-- as addP
 andP :: Parser (Expr Bool)
 andP = (And <$> (spaceSkipP (braceSkipP parse) <* string "&&") <*> spaceSkipP parse) <|>
        (And <$> (bbLitP <* string "&&") <*> spaceSkipP parse)
+
+orP :: Parser (Expr Bool)
+orP = (Or <$> (spaceSkipP (braceSkipP parse) <* string "||") <*> spaceSkipP parse) <|>
+      (Or <$> (bbLitP <* string "||") <*> spaceSkipP parse)
 
 class MyParse a where
   parse :: Parser (Expr a)
 
 instance MyParse Int where
-  parse = try (spaceSkipP addP) <|> braceSkipP parse <|> iiLitP
+  parse = try (spaceSkipP addP)
+          <|> braceSkipP parse
+          <|> iiLitP
 
 instance MyParse Bool where
-  parse = try (spaceSkipP leqP) <|> try (spaceSkipP andP) <|> braceSkipP parse <|> bbLitP
+  parse = try (spaceSkipP leqP)
+          <|> try (spaceSkipP andP)
+          <|> try (spaceSkipP orP)
+          <|> braceSkipP parse
+          <|> bbLitP
