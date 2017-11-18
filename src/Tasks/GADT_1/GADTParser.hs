@@ -71,6 +71,6 @@ class MyParse a where
 
   parse = tryThem variants
 
-  tryThem pasrsers = matcher $ ([spaceSkipP] <*> pasrsers) ++ ([\p -> spaceSkipP $ braceSkipP $ spaceSkipP p] <*> variants) where
+  tryThem parsers = matcher $ ([spaceSkipP] <*> parsers) ++ ([\p -> spaceSkipP $ braceSkipP $ spaceSkipP p] <*> variants) where
     matcher [x]    = x
     matcher (x:xs) = x <|> matcher xs
